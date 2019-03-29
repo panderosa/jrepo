@@ -1,0 +1,23 @@
+{
+  "name": "jrepo",
+  "version": "1.0.0",
+  "description": "Uilities for uploading JS scripts to CSA repository",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panderosa/jrepo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/panderosa/jrepo/issues"
+  },
+  "homepage": "https://github.com/panderosa/jrepo#readme",
+  "dependencies": {
+    "minimist": "^1.2.0",
+    "request": "^2.88.0"
+  }
+}
