@@ -15,14 +15,14 @@ async function main() {
         //const env = await idm.initConfig(configFile);
         // e.g. PSLAB,AMS
         var operation = args.o; // e.g. subscriptionFilter
-        var suite = args.e; 
-               
+        var suite = args.e;
+
         switch (operation) {
             case 'getToken':
-            // node main.js -e AMS -o getToken -c admin -t Provider
+                // node main.js -e AMS -o getToken -c admin -t Provider
                 var consumer = args.c;
                 var tenant = args.t;
-                var token = await idm.getToken(suite,consumer,tenant);
+                var token = await idm.getToken(suite, consumer, tenant);
                 console.log(token);
                 break;
             case 'subscriptionFilter':
@@ -61,7 +61,7 @@ async function main() {
                 var auth = idm.getAuthorization('ooInboundUser', env[suite]['login']['ooInboundUser']);
                 var subsc = await subscription.getDetails(suite, env, auth, subscriptionId);
                 //var order = subsc['ext']['associated_requests'].find(e => e['request_action_name'] === 'ORDER');
-                fs.writeFileSync('c:/tmp/subscription.json',JSON.stringify(subsc,null,2));
+                fs.writeFileSync('c:/tmp/subscription.json', JSON.stringify(subsc, null, 2));
                 break;
             case 'loginGetIdentifier':
                 // node main.js -e AMS -o loginGetIdentifier -u admin -t Provider
@@ -74,7 +74,7 @@ async function main() {
                 var requestId = args.r;
                 var userIdentifier = await login.getIdentifier(suite, env, 'AMS_PS_LAB', 'malinowd');
                 var out = await query.get(suite, env, catalogId, requestId, userIdentifier);
-                fs.writeFileSync('c:/tmp/requestCMT.json',JSON.stringify(out,null,2));
+                fs.writeFileSync('c:/tmp/requestCMT.json', JSON.stringify(out, null, 2));
                 //console.log(out);
                 break;
 
@@ -93,13 +93,22 @@ async function main() {
                 var artifactId = args.a;
                 var userIdentifier = await login.getIdentifier(suite, env, 'Provider', 'ooInboundUser');
                 var out = await legacy.getArtifact(suite, env, artifactId, userIdentifier);
-                fs.writeFileSync(path.join('c:/tmp/subscription.json'),out);
+                fs.writeFileSync(path.join('c:/tmp/subscription.json'), out);
                 console.log(out);
                 break;
             case 'getOrganizations':
-                // node main.js -e AMS -o getOrganizations
+                // node main.js -e AMS -o getOrganizations -f pslab_orgs.json                
+                var fileName = path.join("c:/tmp",args.f);
                 var orgs = await idm.getOrganizations(suite);
-                fs.writeFileSync(path.join('c:/tmp/organizations.json'),orgs);
+                fs.writeFileSync(fileName, orgs);
+                console.log(orgs);
+                break;
+            case 'getOrganizationDetails':
+                // node main.js -e AMS -o getOrganizationDetails -n AMS_PS_LAB -f pslab_orgs.json
+                var fileName = path.join("c:/tmp",args.f);
+                var name = args.n;
+                var orgs = await idm.getOrganizationDetails(suite,name);
+                fs.writeFileSync(path.join(fileName), orgs);
                 console.log(orgs);
                 break;
             default:

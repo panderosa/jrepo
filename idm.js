@@ -47,7 +47,7 @@ function getToken(suite, user, tenant) {
         }
     };
 
-    //console.log("options => " + JSON.stringify(options));
+    console.log("options => " + JSON.stringify(options));
 
     return new Promise((resolve, reject) => {
         request(options, (err, res, body) => {
@@ -71,7 +71,8 @@ body: ${rp}`
 
 async function getOrganizations(suite) {
     var url = env[suite]['service']['idm'] + "/idm-service/api/scim/organizations";
-    var token = await getToken(suite, env, 'admin', 'Provider');
+    var token = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
+
     var options = {
         url: url,
         rejectUnauthorized: false,
@@ -105,9 +106,9 @@ body: ${rp}`
     })
 }
 
-async function getOrganizationConfiguration(intOrgName) {
+async function getOrganizationDetails(suite,intOrgName) {
     var url = env[suite]['service']['idm'] + `/idm-service/api/scim/organizations/${intOrgName}/configurations`;
-    var token = await getToken(suite, env, 'admin', 'Provider');
+    var token = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
     var options = {
         url: url,
         rejectUnauthorized: false,
@@ -147,6 +148,7 @@ module.exports = {
     initConfig,
     getAuthorization,
     getToken,
-    getOrganizations
+    getOrganizations,
+    getOrganizationDetails
 }
 
