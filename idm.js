@@ -2,33 +2,39 @@ let request = require('request');
 const fs = require('fs');
 const path = require('path');
 const config = require('./config.js');
-const env = config.read();
-
-function initConfig(configFile) {
-    fs.readFileSync(configFile);
-    return new Promise((resolve, reject) => {
-        fs.readFile(configFile, (err, data) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                var content = JSON.parse(data.toString());
-                //console.log(content);
-                resolve(content);
-            }
-        });
-    });
-}
 
 function getAuthorization(user, password) {
     return "Basic " + Buffer.from(user + ":" + password).toString('base64');
 }
 
-function getToken(suite, user, tenant) {
-    var url = env[suite]['service']['idm'] + "/idm-service/v2.0/tokens";
-    var transportUser = "idmTransportUser";
-    var password = env[suite]['login'][transportUser];
-    var auth = getAuthorization(transportUser, password);
+sendRequest = async (options, good) => {
+    console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+    var good = good || [200];
+    return new Promise((resolve, reject) => {
+        request(options, (err, res, data) => {
+            if (!err && good.hasIntance(res.statusCode)) {
+                console.log(`res.body *****\n ${res.body}`)
+                resolve(data);
+            }
+            else {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    var rp = JSON.stringify(res.body);
+                    var out = `status code: ${res.statusCode}\n body: ${rp}`
+                    reject(out);
+                }
+            }
+        });
+    })
+}
+
+getToken = async (suite, user, tenant) => {
+    var env = config.read();
+    var url = env[suite].service.idm + "/idm-service/v2.0/tokens";
+    var password = env[suite].login.idmTransportUser;
+    var auth = getAuthorization('idmTransportUser', password);
     var options = {
         url: url,
         rejectUnauthorized: false,
@@ -46,32 +52,15 @@ function getToken(suite, user, tenant) {
             "tenantName": tenant
         }
     };
-
-    console.log("options => " + JSON.stringify(options));
-
-    return new Promise((resolve, reject) => {
-        request(options, (err, res, body) => {
-            if (!err && (res.statusCode === 200 || res.statusCode === 201)) {
-                resolve(body.token.id);
-            }
-            else {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    var rp = JSON.stringify(res.body);
-                    var out = `status code: ${res.statusCode}\n \
-body: ${rp}`
-                    reject(out);
-                }
-            }
-        });
-    })
+    return await sendRequest(options, [200]);
+    
 }
 
-async function getOrganizations(suite) {
+getOrganizationList = async suite => {
+    var env = config.read();
     var url = env[suite]['service']['idm'] + "/idm-service/api/scim/organizations";
-    var token = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
+    var data = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
+    var token = data.body.token.id;
 
     var options = {
         url: url,
@@ -83,30 +72,10 @@ async function getOrganizations(suite) {
             "Accept": "application/json"
         }
     };
-
-    //console.log("options => " + JSON.stringify(options));
-
-    return new Promise((resolve, reject) => {
-        request(options, (err, res, body) => {
-            if (!err && (res.statusCode === 200 || res.statusCode === 201)) {
-                resolve(body);
-            }
-            else {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    var rp = JSON.stringify(res.body);
-                    var out = `status code: ${res.statusCode}\n \
-body: ${rp}`
-                    reject(out);
-                }
-            }
-        });
-    })
+    return await sendRequest(options, [200]);
 }
 
-async function getOrganizationDetails(suite,intOrgName) {
+getOrganizationDetails = async (suite, intOrgName) => {
     var url = env[suite]['service']['idm'] + `/idm-service/api/scim/organizations/${intOrgName}/configurations`;
     var token = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
     var options = {
@@ -120,35 +89,15 @@ async function getOrganizationDetails(suite,intOrgName) {
         }
     };
 
-    //console.log("options => " + JSON.stringify(options));
-
-    return new Promise((resolve, reject) => {
-        request(options, (err, res, body) => {
-            if (!err && (res.statusCode === 200 || res.statusCode === 201)) {
-                resolve(body);
-            }
-            else {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    var rp = JSON.stringify(res.body);
-                    var out = `status code: ${res.statusCode}\n \
-body: ${rp}`
-                    reject(out);
-                }
-            }
-        });
-    })
+    return await sendRequest(options, [200]);
 }
 
 
 
 module.exports = {
-    initConfig,
     getAuthorization,
     getToken,
-    getOrganizations,
+    getOrganizationList,
     getOrganizationDetails
 }
 

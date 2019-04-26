@@ -6,6 +6,8 @@ const subscription = require('./subscription.js');
 const login = require('./login.js');
 const query = require('./request.js');
 const legacy = require('./legacy.js');
+const generic = require('./generic.js');
+const jstore = require('./jstore.js');
 
 
 
@@ -13,17 +15,16 @@ const legacy = require('./legacy.js');
 async function main() {
     try {
         //const env = await idm.initConfig(configFile);
-        // e.g. PSLAB,AMS
         var operation = args.o; // e.g. subscriptionFilter
         var suite = args.e;
 
         switch (operation) {
             case 'getToken':
-                // node main.js -e AMS -o getToken -c admin -t Provider
+                // node main.js -e EMEA -o getToken -c admin -t Provider
                 var consumer = args.c;
                 var tenant = args.t;
-                var token = await idm.getToken(suite, consumer, tenant);
-                console.log(token);
+                var output = await idm.getToken(suite, consumer, tenant);
+                //console.log(`TOKEN:\n ${JSON.stringify(output)}`);
                 break;
             case 'subscriptionFilter':
                 // node main.js -e AMS -o subscriptionFilter -c consumer -t CONSUMER -s CANCELLED
@@ -96,27 +97,49 @@ async function main() {
                 fs.writeFileSync(path.join('c:/tmp/subscription.json'), out);
                 console.log(out);
                 break;
-            case 'getOrganizations':
-                // node main.js -e AMS -o getOrganizations -f pslab_orgs.json                
-                var fileName = path.join("c:/tmp",args.f);
-                var orgs = await idm.getOrganizations(suite);
-                fs.writeFileSync(fileName, orgs);
-                console.log(orgs);
+            case 'getOrganizationList':
+                // node main.js -e EMEA -o getOrganizationList -f out_orgs.json                
+                var fileName = path.join("c:/tmp", args.f);
+                var orgs = await idm.getOrganizationList(suite);
+                fs.writeFileSync(fileName, JSON.stringify(orgs,null,2));
                 break;
             case 'getOrganizationDetails':
-                // node main.js -e AMS -o getOrganizationDetails -n AMS_PS_LAB -f pslab_orgs.json
-                var fileName = path.join("c:/tmp",args.f);
+                // node main.js -e AMS -o getOrganizationDetails -n AMS_PS_LAB -f out_org_details.json
+                var fileName = path.join("c:/tmp", args.f);
                 var name = args.n;
-                var orgs = await idm.getOrganizationDetails(suite,name);
+                var orgs = await idm.getOrganizationDetails(suite, name);
                 fs.writeFileSync(path.join(fileName), orgs);
                 console.log(orgs);
+                break;
+            case 'listScripts':
+                // node main.js -e EMEA -o listScripts
+                var out = await jstore.listScripts(suite);
+                console.log(out.headers);
+                break;
+            case 'getScript':
+                // node main.js -e EMEA -o getScript -n "aws-ec2-get-volume-ids.js"
+                var name = args.n;
+                var data = await jstore.getScript(suite, name);
+                console.log(data.headers);
+                fs.writeFileSync(path.join('c:/tmp/ms.js'),data.body);
+                break;
+            case 'getFile':
+                // node main.js -o getFile -u https://luca.koty.pl:3334/approval/static/237px-Nebukadnessar_II.jpg
+                // node main.js -o getFile -u https://luca.koty.pl:3334/approval/static/ms.js
+                // node main.js -o getFile -u https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Nebukadnessar_II.jpg/237px-Nebukadnessar_II.jpg
+                var url = args.u;
+                var data = await generic.getFile(url);
+                console.log(data.headers);
+                data = Buffer.from(data.body,'base64');
+
+                fs.writeFileSync(path.join('c:/tmp/lala.jpg'),data);
                 break;
             default:
                 throw new Error("Operation not defined");
         }
     }
     catch (error) {
-        console.log(error);
+        console.log("FAILURE: " + error);
     }
 
 
