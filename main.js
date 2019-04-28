@@ -20,11 +20,11 @@ async function main() {
 
         switch (operation) {
             case 'getToken':
-                // node main.js -e EMEA -o getToken -c admin -t Provider
-                var consumer = args.c;
+                // node main.js -e EMEA -o getToken -u admin -t Provider
+                var user = args.u;
                 var tenant = args.t;
-                var output = await idm.getToken(suite, consumer, tenant);
-                //console.log(`TOKEN:\n ${JSON.stringify(output)}`);
+                var token = await idm.getToken(suite,user,tenant);
+                console.log(token);
                 break;
             case 'subscriptionFilter':
                 // node main.js -e AMS -o subscriptionFilter -c consumer -t CONSUMER -s CANCELLED
@@ -101,14 +101,14 @@ async function main() {
                 // node main.js -e EMEA -o getOrganizationList -f out_orgs.json                
                 var fileName = path.join("c:/tmp", args.f);
                 var orgs = await idm.getOrganizationList(suite);
-                fs.writeFileSync(fileName, JSON.stringify(orgs,null,2));
+                fs.writeFileSync(fileName, JSON.stringify(orgs));
                 break;
             case 'getOrganizationDetails':
-                // node main.js -e AMS -o getOrganizationDetails -n AMS_PS_LAB -f out_org_details.json
+                // node main.js -e EMEA -o getOrganizationDetails -n PSO -f out_org_details.json
                 var fileName = path.join("c:/tmp", args.f);
                 var name = args.n;
-                var orgs = await idm.getOrganizationDetails(suite, name);
-                fs.writeFileSync(path.join(fileName), orgs);
+                var details = await idm.getOrganizationDetails(suite, name);
+                fs.writeFileSync(path.join(fileName), JSON.stringify(details));
                 console.log(orgs);
                 break;
             case 'listScripts':

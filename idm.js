@@ -7,30 +7,27 @@ function getAuthorization(user, password) {
     return "Basic " + Buffer.from(user + ":" + password).toString('base64');
 }
 
-sendRequest = async (options, good) => {
-    console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-    var good = good || [200];
-    return new Promise((resolve, reject) => {
-        request(options, (err, res, data) => {
-            if (!err && good.hasIntance(res.statusCode)) {
-                console.log(`res.body *****\n ${res.body}`)
-                resolve(data);
+async function sendRequest(options, goodStatuses) {
+    var goodStatuses = goodStatuses || [200];
+    return new Promise(function (resolve, reject) {
+        request(options, (err, res) => {
+            if (!err && goodStatuses.includes(res.statusCode)) {
+                resolve(res.body);
             }
             else {
-                if (err) {
-                    reject(err);
+                var failure = {
+                    error: err,
+                    message: res.body || null,
+                    headers: res.headers || null,
+                    code: res.statusCode || null
                 }
-                else {
-                    var rp = JSON.stringify(res.body);
-                    var out = `status code: ${res.statusCode}\n body: ${rp}`
-                    reject(out);
-                }
+                reject(failure);
             }
         });
     })
 }
 
-getToken = async (suite, user, tenant) => {
+async function getToken(suite, user, tenant) {
     var env = config.read();
     var url = env[suite].service.idm + "/idm-service/v2.0/tokens";
     var password = env[suite].login.idmTransportUser;
@@ -52,20 +49,21 @@ getToken = async (suite, user, tenant) => {
             "tenantName": tenant
         }
     };
-    return await sendRequest(options, [200]);
-    
+    var resp = await sendRequest(options, [200]);
+    return resp;
 }
 
-getOrganizationList = async suite => {
+async function getOrganizationList(suite) {
     var env = config.read();
     var url = env[suite]['service']['idm'] + "/idm-service/api/scim/organizations";
     var data = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
-    var token = data.body.token.id;
+    var token = data.token.id;
 
     var options = {
         url: url,
         rejectUnauthorized: false,
         method: "GET",
+        json: true,
         headers: {
             "Accept": "application/json",
             "X-Auth-Token": token,
@@ -75,13 +73,16 @@ getOrganizationList = async suite => {
     return await sendRequest(options, [200]);
 }
 
-getOrganizationDetails = async (suite, intOrgName) => {
+async function getOrganizationDetails(suite, intOrgName) {
+    var env = config.read();
     var url = env[suite]['service']['idm'] + `/idm-service/api/scim/organizations/${intOrgName}/configurations`;
-    var token = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
+    var data = await getToken(suite, env[suite].admin.user, env[suite].admin.tenant);
+    var token = data.token.id;
     var options = {
         url: url,
         rejectUnauthorized: false,
         method: "GET",
+        json: true,
         headers: {
             "Accept": "application/json",
             "X-Auth-Token": token,
